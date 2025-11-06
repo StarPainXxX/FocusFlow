@@ -12,7 +12,6 @@ struct PomodoroView: View {
     @StateObject private var pomodoroViewModel = PomodoroViewModel()
     @Environment(\.modelContext) private var modelContext
     @State private var showTaskPicker = false
-    @State private var showTagPicker = false
     
     var body: some View {
         NavigationStack {
@@ -39,6 +38,9 @@ struct PomodoroView: View {
                 .padding()
             }
             .navigationTitle("番茄模式")
+            .sheet(isPresented: $showTaskPicker) {
+                TaskPickerView(selectedTask: $pomodoroViewModel.selectedTask)
+            }
         }
         .onAppear {
             pomodoroViewModel.setModelContext(modelContext)
@@ -49,13 +51,17 @@ struct PomodoroView: View {
     private var pomodoroCounter: some View {
         HStack(spacing: 10) {
             ForEach(0..<pomodoroViewModel.pomodorosBeforeLongBreak, id: \.self) { index in
-                Image(systemName: index < pomodoroViewModel.completedPomodoros ? "tomato.fill" : "tomato")
-                    .font(.title)
-                    .foregroundColor(
-                        index < pomodoroViewModel.completedPomodoros
-                            ? .red
-                            : .gray
-                    )
+                if index < pomodoroViewModel.completedPomodoros {
+                    // 已完成的番茄：使用红色圆形填充
+                    Image(systemName: "circle.fill")
+                        .font(.title)
+                        .foregroundColor(.red)
+                } else {
+                    // 未完成的番茄：使用灰色圆形边框
+                    Image(systemName: "circle")
+                        .font(.title)
+                        .foregroundColor(.gray)
+                }
             }
         }
         .padding()
@@ -111,57 +117,23 @@ struct PomodoroView: View {
         .padding()
     }
     
-    // MARK: - 任务和标签选择
+    // MARK: - 任务选择
     private var taskAndTagSection: some View {
-        VStack(spacing: 15) {
-            // 任务选择
-            HStack {
-                Image(systemName: "checklist")
-                    .foregroundColor(.secondary)
-                Text("任务:")
-                    .foregroundColor(.secondary)
-                Spacer()
-                Button(pomodoroViewModel.selectedTask?.name ?? "选择任务") {
-                    showTaskPicker = true
-                }
-                .foregroundColor(.primary)
+        // 任务选择
+        HStack {
+            Image(systemName: "checklist")
+                .foregroundColor(.secondary)
+            Text("任务:")
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(pomodoroViewModel.selectedTask?.name ?? "选择任务") {
+                showTaskPicker = true
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
-            
-            // 标签选择
-            HStack {
-                Image(systemName: "tag")
-                    .foregroundColor(.secondary)
-                Text("标签:")
-                    .foregroundColor(.secondary)
-                Spacer()
-                if pomodoroViewModel.selectedTags.isEmpty {
-                    Button("添加标签") {
-                        showTagPicker = true
-                    }
-                    .foregroundColor(.primary)
-                } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(pomodoroViewModel.selectedTags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.caption)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(AppColors.primary.opacity(0.2))
-                                    .foregroundColor(AppColors.primary)
-                                    .cornerRadius(8)
-                            }
-                        }
-                    }
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
+            .foregroundColor(.primary)
         }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
     }
     
     // MARK: - 控制按钮

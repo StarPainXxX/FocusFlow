@@ -202,11 +202,14 @@ class PomodoroViewModel: ObservableObject {
     
     // MARK: - Private Methods
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+        timer?.invalidate()
+        timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.tick()
             }
         }
+        // 使用 .common mode 确保在用户交互时 Timer 也能运行
+        RunLoop.current.add(timer!, forMode: .common)
     }
     
     private func tick() {
@@ -241,6 +244,24 @@ class PomodoroViewModel: ObservableObject {
                 do {
                     try context.save()
                     Logger.info("保存番茄记录成功: \(session.id)", category: .data)
+                    
+                    // 更新用户统计数据
+                    StatisticsUtils.updateUserStatistics(
+                        context: context,
+                        focusMinutes: workDuration,
+                        userId: session.userId
+                    )
+                    
+                    // 如果关联了任务，更新任务进度
+                    if let taskId = session.taskId {
+                        updateTaskProgress(taskId: taskId, minutes: workDuration, context: context)
+                    }
+                    
+                    // 确保保存完成
+                    try context.save()
+                    
+                    // 发送通知，通知其他视图刷新
+                    NotificationCenter.default.post(name: NSNotification.Name("FocusSessionCompleted"), object: nil)
                 } catch {
                     Logger.error("保存番茄记录失败: \(error.localizedDescription)", category: .data)
                 }
@@ -266,9 +287,7 @@ class PomodoroViewModel: ObservableObject {
             
             // 自动开始休息
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                Task { @MainActor in
-                    self.startPhase()
-                }
+                self.startPhase()
             }
             
         case .shortBreak, .longBreak:
@@ -277,14 +296,32 @@ class PomodoroViewModel: ObservableObject {
             
             // 自动开始工作
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                Task { @MainActor in
-                    self.startPhase()
-                }
+                self.startPhase()
             }
         }
         
         Logger.info("完成阶段: \(currentPhase)", category: .timer)
     }
+    
+        // MARK: - 任务进度更新
+        private func updateTaskProgress(taskId: UUID, minutes: Int, context: ModelContext) {
+            // 直接使用 UUID 比较（SwiftData 不支持嵌套 KeyPath）
+            let descriptor = FetchDescriptor<Task>(
+                predicate: #Predicate<Task> { task in
+                    task.id == taskId
+                }
+            )
+            
+            if let task = try? context.fetch(descriptor).first {
+                task.updateProgress(minutes: minutes)
+                do {
+                    try context.save()
+                    Logger.info("更新任务进度成功: \(task.name), 进度: \(task.progress)/\(task.totalGoal)分钟", category: .data)
+                } catch {
+                    Logger.error("更新任务进度失败: \(error.localizedDescription)", category: .data)
+                }
+            }
+        }
     
     deinit {
         timer?.invalidate()

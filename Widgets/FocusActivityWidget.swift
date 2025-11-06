@@ -49,16 +49,16 @@ struct FocusActivityWidget: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
                         // 任务图标
-                        Group {
-                            if let iconName = context.state.taskIcon, !iconName.isEmpty {
-                                Image(systemName: iconName)
-                                    .font(.title3)
-                                    .foregroundColor(context.state.taskColor != nil ? colorFromHex(context.state.taskColor!) : .blue)
-                            } else {
-                                Image(systemName: "timer")
-                                    .font(.title3)
-                                    .foregroundColor(.blue)
-                            }
+                        if let iconName = context.state.taskIcon, !iconName.isEmpty {
+                            Image(systemName: iconName)
+                                .font(.title3)
+                                .foregroundColor(context.state.taskColor != nil ? colorFromHex(context.state.taskColor!) : .blue)
+                                .symbolRenderingMode(.hierarchical)
+                        } else {
+                            Image(systemName: "timer")
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                                .symbolRenderingMode(.hierarchical)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -120,16 +120,16 @@ struct FocusActivityWidget: Widget {
                 }
             } compactLeading: {
                 // 紧凑模式左侧 - 显示任务图标
-                Group {
-                    if let iconName = context.state.taskIcon, !iconName.isEmpty {
-                        Image(systemName: iconName)
-                            .font(.caption)
-                            .foregroundColor(context.state.taskColor != nil ? colorFromHex(context.state.taskColor!) : (context.state.isPaused ? .orange : .blue))
-                    } else {
-                        Image(systemName: context.state.isPaused ? "pause.circle" : "timer")
-                            .font(.caption)
-                            .foregroundColor(context.state.isPaused ? .orange : .blue)
-                    }
+                if let iconName = context.state.taskIcon, !iconName.isEmpty {
+                    Image(systemName: iconName)
+                        .font(.caption)
+                        .foregroundColor(context.state.taskColor != nil ? colorFromHex(context.state.taskColor!) : (context.state.isPaused ? .orange : .blue))
+                        .symbolRenderingMode(.hierarchical)
+                } else {
+                    Image(systemName: context.state.isPaused ? "pause.circle" : "timer")
+                        .font(.caption)
+                        .foregroundColor(context.state.isPaused ? .orange : .blue)
+                        .symbolRenderingMode(.hierarchical)
                 }
             } compactTrailing: {
                 // 紧凑模式右侧 - 显示剩余时间
@@ -139,16 +139,16 @@ struct FocusActivityWidget: Widget {
                     .foregroundColor(.primary)
             } minimal: {
                 // 最小模式 - 显示任务图标
-                Group {
-                    if let iconName = context.state.taskIcon, !iconName.isEmpty {
-                        Image(systemName: iconName)
-                            .font(.caption)
-                            .foregroundColor(context.state.taskColor != nil ? colorFromHex(context.state.taskColor!) : (context.state.isPaused ? .orange : .blue))
-                    } else {
-                        Image(systemName: context.state.isPaused ? "pause.circle" : "timer")
-                            .font(.caption)
-                            .foregroundColor(context.state.isPaused ? .orange : .blue)
-                    }
+                if let iconName = context.state.taskIcon, !iconName.isEmpty {
+                    Image(systemName: iconName)
+                        .font(.caption)
+                        .foregroundColor(context.state.taskColor != nil ? colorFromHex(context.state.taskColor!) : (context.state.isPaused ? .orange : .blue))
+                        .symbolRenderingMode(.hierarchical)
+                } else {
+                    Image(systemName: context.state.isPaused ? "pause.circle" : "timer")
+                        .font(.caption)
+                        .foregroundColor(context.state.isPaused ? .orange : .blue)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
         }
